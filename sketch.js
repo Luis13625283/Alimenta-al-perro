@@ -1,14 +1,12 @@
 var dog,sadDog,happyDog, database;
 var foodS,foodStock;
-var addFood;
+var fedTime,lastFed;
+var feed,addFood;
 var foodObj;
 
-//crea aquí las variables feed y lastFed 
-var feed,lastFed;
-
 function preload(){
-sadDog=loadImage("Dog.png");
-happyDog=loadImage("happy dog.png");
+sadDog=loadImage("Images/Dog.png");
+happyDog=loadImage("Images/happy dog.png");
 }
 
 function setup() {
@@ -23,11 +21,10 @@ function setup() {
   dog=createSprite(800,200,150,150);
   dog.addImage(sadDog);
   dog.scale=0.15;
-
-  //crea aquí el boton Alimentar al perro
-  addFood=createButton("Agregar Alimento");
-  addFood.position(800,95);
-  addFood.mousePressed(addFoods);
+  
+  feed=createButton("Alimenta al perro");
+  feed.position(700,95);
+  feed.mousePressed(feedDog);
 
   addFood=createButton("Agregar Alimento");
   addFood.position(800,95);
@@ -39,20 +36,20 @@ function draw() {
   background(46,139,87);
   foodObj.display();
 
-  //escribe el código para leer el valor de tiempo de alimentación de la base de datos
+  fedTime=database.ref('FeedTime');
+  fedTime.on("value",function(data){
+    lastFed=data.val();
+  });
+ 
+  fill(255,255,254);
+  textSize(15);
   if(lastFed>=12){
-
-  } else if(lastFed==0){
-    text("Ultima hora en que se alimento : 12PM", 350,30);
-  }else{
-    //escribe el código para mostrar el texto lastFed time aquí
-    if(lastFed<=12){
-
-    }else if(lastFed==0){
-      text("Ultima hora que se alimento : 0AM", 350,30);
-    }
-  }
-
+    text("Última hora en que se alimentó : "+ lastFed%12 + " PM", 350,30);
+   }else if(lastFed==0){
+     text("Última hora en que se alimentó : 12 AM",350,30);
+   }else{
+     text("Última hora en que se alimentó : "+ lastFed + " AM", 350,30);
+   }
  
   drawSprites();
 }
@@ -64,19 +61,23 @@ function readStock(data){
 }
 
 
+//función para actualizar la existencia de alimento, y la última hora en la que se alimentó
 function feedDog(){
   dog.addImage(happyDog);
-
-  //escribe el código aquí para actualizar las existencia de alimento, y la última vez que se alimentó al perro
-  var food_stock_val = foodObj.getFoodStock();
-  if(food_stock_val <= 0){
-    foodObj.updateFoodStock(food_stock_val *0);
+  
+  if(foodObj.getFoodStock()<= 0){
+    foodObj.updateFoodStock(foodObj.getFoodStock()*0);
   }else{
-    foodObj.updateFoodStock(food_stock_val -1);
+    foodObj.updateFoodStock(foodObj.getFoodStock()-1);
   }
+  
+  database.ref('/').update({
+    Food:foodObj.getFoodStock(),
+    FeedTime:hour()
+  })
 }
 
-//funcón para agregar alimento al almacén
+//función para agregar el alimento al almacén
 function addFoods(){
   foodS++;
   database.ref('/').update({
